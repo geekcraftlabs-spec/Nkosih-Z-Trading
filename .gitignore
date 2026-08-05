@@ -1,0 +1,16 @@
+# Environment variables (THIS IS THE MOST IMPORTANT LINE)
+.env
+.env.local
+.env.production
+.env.development
+
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Logs
+*.log
+npm-debug.log*
