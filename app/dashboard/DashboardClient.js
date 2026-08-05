@@ -11,17 +11,16 @@ export default function DashboardClient() {
     const [filter, setFilter] = useState('all');
     const [activeFilter, setActiveFilter] = useState('all');
     const [resending, setResending] = useState(false);
+    const [rejectLoading, setRejectLoading] = useState(false);
 
     const fetchData = async () => {
         try {
             const res = await fetch('/api/subscriptions?status=pending');
             const p = await res.json();
-            console.log('📊 Pending data:', p);
             setPending(p);
 
             const res2 = await fetch('/api/subscriptions?status=active');
             const a = await res2.json();
-            console.log('📊 Active data:', a);
             setActive(a);
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -38,8 +37,6 @@ export default function DashboardClient() {
             return;
         }
 
-        console.log('📤 Approving codes:', selected);
-
         setLoading(true);
         try {
             const res = await fetch('/api/approve', {
@@ -48,7 +45,6 @@ export default function DashboardClient() {
                 headers: { 'Content-Type': 'application/json' },
             });
             const data = await res.json();
-            console.log('📥 Approve response:', data);
 
             if (data.success) {
                 alert(`✅ Approved ${data.approved} applications! Emails sent to clients.`);
@@ -62,6 +58,30 @@ export default function DashboardClient() {
             console.error(error);
         }
         setLoading(false);
+    };
+
+    const handleReject = async (code) => {
+        if (!confirm('Are you sure you want to reject this application?')) return;
+        
+        setRejectLoading(true);
+        try {
+            const res = await fetch('/api/reject', {
+                method: 'POST',
+                body: JSON.stringify({ code }),
+                headers: { 'Content-Type': 'application/json' },
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('✅ Application rejected!');
+                fetchData();
+            } else {
+                alert('❌ Failed to reject: ' + data.error);
+            }
+        } catch (error) {
+            alert('Network error');
+            console.error(error);
+        }
+        setRejectLoading(false);
     };
 
     const handleLogout = () => {
@@ -201,12 +221,13 @@ export default function DashboardClient() {
                                     <th className="p-3 text-left text-gray-400 font-medium">Total</th>
                                     <th className="p-3 text-left text-gray-400 font-medium">Monthly</th>
                                     <th className="p-3 text-left text-gray-400 font-medium">Term</th>
+                                    <th className="p-3 text-left text-gray-400 font-medium">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredPending.length === 0 ? (
                                     <tr>
-                                        <td colSpan="7" className="p-6 text-center text-gray-500">
+                                        <td colSpan="8" className="p-6 text-center text-gray-500">
                                             No pending applications
                                         </td>
                                     </tr>
@@ -235,6 +256,15 @@ export default function DashboardClient() {
                                             <td className="p-3 text-green-400">R{p.total_price}</td>
                                             <td className="p-3 text-white">R{p.monthly_amount}</td>
                                             <td className="p-3 text-gray-400">{p.repayment_months}m</td>
+                                            <td className="p-3">
+                                                <button
+                                                    onClick={() => handleReject(p.code)}
+                                                    disabled={rejectLoading}
+                                                    className="text-red-400 hover:text-red-300 text-xs font-medium transition disabled:opacity-50"
+                                                >
+                                                    Reject
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}
@@ -280,6 +310,21 @@ export default function DashboardClient() {
                                             <p className="text-gray-400 text-xs">Term</p>
                                             <p className="text-gray-300">{p.repayment_months}m</p>
                                         </div>
+                                    </div>
+                                    <div className="flex justify-between mt-3 pt-2 border-t border-gray-600">
+                                        <button
+                                            onClick={() => toggleSelect(p.code)}
+                                            className="text-blue-400 hover:text-blue-300 text-xs font-medium"
+                                        >
+                                            {selected.includes(p.code) ? '✓ Selected' : 'Select'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleReject(p.code)}
+                                            disabled={rejectLoading}
+                                            className="text-red-400 hover:text-red-300 text-xs font-medium"
+                                        >
+                                            Reject
+                                        </button>
                                     </div>
                                 </div>
                             ))
