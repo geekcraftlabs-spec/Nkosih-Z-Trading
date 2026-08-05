@@ -1,8 +1,10 @@
 'use client';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-export default function Complete() {
+// This component handles the actual logic and uses useSearchParams
+function CompleteContent() {
   const params = useSearchParams();
   const code = params.get('code');
   const [app, setApp] = useState(null);
@@ -31,8 +33,6 @@ export default function Complete() {
     if (!app) return;
 
     setLoading(true);
-
-    // Simulate Paystack card processing (2-second delay)
     await new Promise(resolve => setTimeout(resolve, 2000));
 
     try {
@@ -188,5 +188,21 @@ export default function Complete() {
         )}
       </div>
     </div>
+  );
+}
+
+// The main page component – wraps the content in a Suspense boundary
+export default function Complete() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading...</p>
+        </div>
+      </div>
+    }>
+      <CompleteContent />
+    </Suspense>
   );
 }
