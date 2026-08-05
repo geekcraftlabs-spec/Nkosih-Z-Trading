@@ -1,12 +1,24 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Dashboard() {
+  const router = useRouter();
   const [pending, setPending] = useState([]);
   const [active, setActive] = useState([]);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('all');
+  const [activeFilter, setActiveFilter] = useState('all');
+  const [resending, setResending] = useState(false);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const isLoggedIn = document.cookie.includes('admin_session');
+    if (!isLoggedIn) {
+      router.push('/login');
+    }
+  }, [router]);
 
   const fetchData = async () => {
     try {
@@ -55,16 +67,28 @@ export default function Dashboard() {
     setLoading(false);
   };
 
+  const handleLogout = () => {
+    document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    router.push('/login');
+  };
+
   const getFilteredPending = () => {
     if (filter === 'all') return pending;
-    if (filter === 'construction') return pending.filter(p => p.serviceType === 'construction');
-    if (filter === 'trucking') return pending.filter(p => p.serviceType === 'trucking');
+    if (filter === 'construction') return pending.filter(p => p.service_type === 'construction');
+    if (filter === 'trucking') return pending.filter(p => p.service_type === 'trucking');
     return pending;
   };
 
-  const filteredPending = getFilteredPending();
+  const getFilteredActive = () => {
+    if (activeFilter === 'all') return active;
+    if (activeFilter === 'paid') return active.filter(a => (a.total_paid || 0) > 0);
+    if (activeFilter === 'unpaid') return active.filter(a => (a.total_paid || 0) == 0);
+    return active;
+  };
 
-  // Toggle all selection
+  const filteredPending = getFilteredPending();
+  const filteredActive = getFilteredActive();
+
   const toggleAll = (e) => {
     if (e.target.checked) {
       setSelected(filteredPending.map(p => p.code));
@@ -73,7 +97,6 @@ export default function Dashboard() {
     }
   };
 
-  // Toggle single selection
   const toggleSelect = (code) => {
     if (selected.includes(code)) {
       setSelected(selected.filter(c => c !== code));
@@ -91,12 +114,20 @@ export default function Dashboard() {
             <h1 className="text-2xl sm:text-3xl font-bold text-white">📊 Admin Dashboard</h1>
             <p className="text-gray-400 text-sm">Nkosih Z Trading – Debit Order Management</p>
           </div>
-          <a
-            href="/"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-          >
-            + New Application
-          </a>
+          <div className="flex gap-3">
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            >
+              Logout
+            </button>
+            <a
+              href="/"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            >
+              + New Application
+            </a>
+          </div>
         </div>
 
         {/* Controls */}
@@ -155,7 +186,7 @@ export default function Dashboard() {
             </h2>
           </div>
 
-          {/* DESKTOP TABLE (hidden on mobile) */}
+          {/* DESKTOP TABLE */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-900/50">
@@ -195,19 +226,19 @@ export default function Dashboard() {
                         />
                       </td>
                       <td className="p-3 font-mono text-sm text-blue-400">{p.code}</td>
-                      <td className="p-3 text-white">{p.fullName}</td>
+                      <td className="p-3 text-white">{p.full_name}</td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          p.serviceType === 'construction' 
+                          p.service_type === 'construction' 
                             ? 'bg-blue-900/50 text-blue-300' 
                             : 'bg-orange-900/50 text-orange-300'
                         }`}>
-                          {p.serviceType}
+                          {p.service_type}
                         </span>
                       </td>
-                      <td className="p-3 text-green-400">R{p.totalPrice}</td>
-                      <td className="p-3 text-white">R{p.monthlyAmount}</td>
-                      <td className="p-3 text-gray-400">{p.repaymentMonths}m</td>
+                      <td className="p-3 text-green-400">R{p.total_price}</td>
+                      <td className="p-3 text-white">R{p.monthly_amount}</td>
+                      <td className="p-3 text-gray-400">{p.repayment_months}m</td>
                     </tr>
                   ))
                 )}
@@ -215,7 +246,7 @@ export default function Dashboard() {
             </table>
           </div>
 
-          {/* MOBILE CARDS (visible only on mobile) */}
+          {/* MOBILE CARDS */}
           <div className="sm:hidden p-4 space-y-4">
             {filteredPending.length === 0 ? (
               <p className="text-center text-gray-500 py-8">No pending applications</p>
@@ -233,26 +264,26 @@ export default function Dashboard() {
                       <span className="font-mono text-sm text-blue-400">{p.code}</span>
                     </div>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      p.serviceType === 'construction' 
+                      p.service_type === 'construction' 
                         ? 'bg-blue-900/50 text-blue-300' 
                         : 'bg-orange-900/50 text-orange-300'
                     }`}>
-                      {p.serviceType}
+                      {p.service_type}
                     </span>
                   </div>
-                  <p className="text-white font-medium">{p.fullName}</p>
+                  <p className="text-white font-medium">{p.full_name}</p>
                   <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
                     <div>
                       <p className="text-gray-400 text-xs">Total</p>
-                      <p className="text-green-400 font-semibold">R{p.totalPrice}</p>
+                      <p className="text-green-400 font-semibold">R{p.total_price}</p>
                     </div>
                     <div>
                       <p className="text-gray-400 text-xs">Monthly</p>
-                      <p className="text-white font-semibold">R{p.monthlyAmount}</p>
+                      <p className="text-white font-semibold">R{p.monthly_amount}</p>
                     </div>
                     <div>
                       <p className="text-gray-400 text-xs">Term</p>
-                      <p className="text-gray-300">{p.repaymentMonths}m</p>
+                      <p className="text-gray-300">{p.repayment_months}m</p>
                     </div>
                   </div>
                 </div>
@@ -269,6 +300,40 @@ export default function Dashboard() {
             </h2>
           </div>
 
+          {/* Active Filter Buttons */}
+          <div className="px-4 sm:px-6 py-3 border-b border-gray-700 flex flex-wrap gap-2">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`px-3 py-1 rounded-lg text-sm transition ${
+                activeFilter === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              All ({active.length})
+            </button>
+            <button
+              onClick={() => setActiveFilter('paid')}
+              className={`px-3 py-1 rounded-lg text-sm transition ${
+                activeFilter === 'paid'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              ✅ Paid ({active.filter(a => (a.total_paid || 0) > 0).length})
+            </button>
+            <button
+              onClick={() => setActiveFilter('unpaid')}
+              className={`px-3 py-1 rounded-lg text-sm transition ${
+                activeFilter === 'unpaid'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              ⏳ Unpaid ({active.filter(a => (a.total_paid || 0) == 0).length})
+            </button>
+          </div>
+
           {/* DESKTOP TABLE */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm">
@@ -279,33 +344,64 @@ export default function Dashboard() {
                   <th className="p-3 text-left text-gray-400 font-medium">Service</th>
                   <th className="p-3 text-left text-gray-400 font-medium">Monthly</th>
                   <th className="p-3 text-left text-gray-400 font-medium">Total Paid</th>
-                  <th className="p-3 text-left text-gray-400 font-medium">Next Billing</th>
+                  <th className="p-3 text-left text-gray-400 font-medium">Approved On</th>
+                  <th className="p-3 text-left text-gray-400 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {active.length === 0 ? (
+                {filteredActive.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-6 text-center text-gray-500">
+                    <td colSpan="7" className="p-6 text-center text-gray-500">
                       No active subscriptions
                     </td>
                   </tr>
                 ) : (
-                  active.map((a) => (
+                  filteredActive.map((a) => (
                     <tr key={a.id} className="border-b border-gray-700 hover:bg-gray-700/50 transition">
                       <td className="p-3 font-mono text-sm text-green-400">{a.code}</td>
-                      <td className="p-3 text-white">{a.fullName}</td>
+                      <td className="p-3 text-white">{a.full_name}</td>
                       <td className="p-3">
                         <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          a.serviceType === 'construction' 
+                          a.service_type === 'construction' 
                             ? 'bg-blue-900/50 text-blue-300' 
                             : 'bg-orange-900/50 text-orange-300'
                         }`}>
-                          {a.serviceType}
+                          {a.service_type}
                         </span>
                       </td>
-                      <td className="p-3 text-white">R{a.monthlyAmount}</td>
-                      <td className="p-3 text-green-400">R{a.totalPaid || 0}</td>
-                      <td className="p-3 text-gray-300">{a.nextBilling || 'Pending'}</td>
+                      <td className="p-3 text-white">R{a.monthly_amount}</td>
+                      <td className="p-3 text-green-400">R{a.total_paid || 0}</td>
+                      <td className="p-3 text-gray-300 text-sm">
+                        {a.approved_at ? new Date(a.approved_at).toLocaleDateString() : 'N/A'}
+                      </td>
+                      <td className="p-3">
+                        {a.total_paid == 0 ? (
+                          <button
+                            onClick={async () => {
+                              if (!confirm('Resend approval email to this client?')) return;
+                              setResending(true);
+                              try {
+                                const res = await fetch('/api/resend-approval', {
+                                  method: 'POST',
+                                  body: JSON.stringify({ code: a.code }),
+                                  headers: { 'Content-Type': 'application/json' },
+                                });
+                                const data = await res.json();
+                                alert(data.success ? '✅ Reminder email sent!' : '❌ Failed to send');
+                              } catch (error) {
+                                alert('Network error');
+                              }
+                              setResending(false);
+                            }}
+                            disabled={resending}
+                            className="text-blue-400 hover:text-blue-300 text-xs font-medium transition disabled:opacity-50"
+                          >
+                            📧 Resend
+                          </button>
+                        ) : (
+                          <span className="text-green-400 text-xs font-medium">✅ Paid</span>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}
@@ -315,36 +411,64 @@ export default function Dashboard() {
 
           {/* MOBILE CARDS */}
           <div className="sm:hidden p-4 space-y-4">
-            {active.length === 0 ? (
+            {filteredActive.length === 0 ? (
               <p className="text-center text-gray-500 py-8">No active subscriptions</p>
             ) : (
-              active.map((a) => (
+              filteredActive.map((a) => (
                 <div key={a.id} className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
                   <div className="flex items-start justify-between mb-2">
                     <span className="font-mono text-sm text-green-400">{a.code}</span>
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      a.serviceType === 'construction' 
+                      a.service_type === 'construction' 
                         ? 'bg-blue-900/50 text-blue-300' 
                         : 'bg-orange-900/50 text-orange-300'
                     }`}>
-                      {a.serviceType}
+                      {a.service_type}
                     </span>
                   </div>
-                  <p className="text-white font-medium">{a.fullName}</p>
+                  <p className="text-white font-medium">{a.full_name}</p>
                   <div className="grid grid-cols-3 gap-2 mt-3 text-sm">
                     <div>
                       <p className="text-gray-400 text-xs">Monthly</p>
-                      <p className="text-white font-semibold">R{a.monthlyAmount}</p>
+                      <p className="text-white font-semibold">R{a.monthly_amount}</p>
                     </div>
                     <div>
                       <p className="text-gray-400 text-xs">Paid</p>
-                      <p className="text-green-400 font-semibold">R{a.totalPaid || 0}</p>
+                      <p className="text-green-400 font-semibold">R{a.total_paid || 0}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400 text-xs">Next</p>
-                      <p className="text-gray-300 text-xs">{a.nextBilling || 'Pending'}</p>
+                      <p className="text-gray-400 text-xs">Approved</p>
+                      <p className="text-gray-300 text-xs">
+                        {a.approved_at ? new Date(a.approved_at).toLocaleDateString() : 'N/A'}
+                      </p>
                     </div>
                   </div>
+                  {a.total_paid == 0 ? (
+                    <button
+                      onClick={async () => {
+                        if (!confirm('Resend approval email to this client?')) return;
+                        setResending(true);
+                        try {
+                          const res = await fetch('/api/resend-approval', {
+                            method: 'POST',
+                            body: JSON.stringify({ code: a.code }),
+                            headers: { 'Content-Type': 'application/json' },
+                          });
+                          const data = await res.json();
+                          alert(data.success ? '✅ Reminder sent!' : '❌ Failed');
+                        } catch (error) {
+                          alert('Network error');
+                        }
+                        setResending(false);
+                      }}
+                      disabled={resending}
+                      className="text-blue-400 hover:text-blue-300 text-xs font-medium transition disabled:opacity-50 mt-3"
+                    >
+                      📧 Resend Email
+                    </button>
+                  ) : (
+                    <span className="text-green-400 text-xs font-medium mt-3 inline-block">✅ Paid</span>
+                  )}
                 </div>
               ))
             )}
