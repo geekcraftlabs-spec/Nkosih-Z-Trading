@@ -1,14 +1,23 @@
-import { readDB } from '@/utils/fileHandler';
+import { getPendingApplications, getActiveApplications } from '@/utils/db';
 
 export async function GET(req) {
-  const db = readDB();
-  const url = new URL(req.url);
-  const status = url.searchParams.get('status');
+    const url = new URL(req.url);
+    const status = url.searchParams.get('status');
 
-  let data = [];
-  if (status === 'pending') data = db.pending;
-  else if (status === 'active') data = db.active;
-  else data = { pending: db.pending, active: db.active };
-
-  return Response.json(data);
+    try {
+        if (status === 'pending') {
+            const data = await getPendingApplications();
+            return Response.json(data);
+        } else if (status === 'active') {
+            const data = await getActiveApplications();
+            return Response.json(data);
+        } else {
+            const pending = await getPendingApplications();
+            const active = await getActiveApplications();
+            return Response.json({ pending, active });
+        }
+    } catch (error) {
+        console.error('API error:', error);
+        return Response.json({ error: error.message }, { status: 500 });
+    }
 }

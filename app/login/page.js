@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -24,7 +25,6 @@ export default function Login() {
             const data = await res.json();
 
             if (data.success) {
-                // Set a session cookie (expires in 7 days)
                 document.cookie = 'admin_session=true; path=/; max-age=604800';
                 router.push('/dashboard');
             } else {
@@ -40,10 +40,19 @@ export default function Login() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
             <div className="bg-gray-800 max-w-md w-full p-8 rounded-2xl shadow-2xl border border-gray-700">
-                <div className="text-center mb-8">
-                    <span className="text-4xl block mb-2">🏢</span>
-                    <h1 className="text-2xl font-bold text-white">Nkosih Z Trading</h1>
-                    <p className="text-gray-400 text-sm">Admin Login</p>
+                {/* Header with Home Button */}
+                <div className="flex justify-between items-center mb-6">
+                    <div className="text-center flex-1">
+                        <span className="text-4xl block mb-2">🏢</span>
+                        <h1 className="text-2xl font-bold text-white">Nkosih Z Trading</h1>
+                        <p className="text-gray-400 text-sm">Admin Login</p>
+                    </div>
+                    <Link
+                        href="/"
+                        className="text-gray-400 hover:text-white transition text-sm bg-gray-700 hover:bg-gray-600 px-3 py-2 rounded-lg"
+                    >
+                        🏠 Home
+                    </Link>
                 </div>
 
                 {error && (
@@ -95,7 +104,7 @@ export default function Login() {
                 </form>
 
                 <p className="text-center text-gray-500 text-xs mt-4">
-                    Demo credentials: ceo@nkosihztrading.co.za / admin#2026
+                    Demo: ceo@nkosihztrading.co.za / admin#2026
                 </p>
             </div>
         </div>
