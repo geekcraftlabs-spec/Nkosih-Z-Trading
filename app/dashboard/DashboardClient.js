@@ -16,10 +16,12 @@ export default function DashboardClient() {
         try {
             const res = await fetch('/api/subscriptions?status=pending');
             const p = await res.json();
+            console.log('📊 Pending data:', p);
             setPending(p);
 
             const res2 = await fetch('/api/subscriptions?status=active');
             const a = await res2.json();
+            console.log('📊 Active data:', a);
             setActive(a);
         } catch (error) {
             console.error('Failed to fetch data:', error);
@@ -36,6 +38,8 @@ export default function DashboardClient() {
             return;
         }
 
+        console.log('📤 Approving codes:', selected);
+
         setLoading(true);
         try {
             const res = await fetch('/api/approve', {
@@ -44,13 +48,14 @@ export default function DashboardClient() {
                 headers: { 'Content-Type': 'application/json' },
             });
             const data = await res.json();
+            console.log('📥 Approve response:', data);
 
             if (data.success) {
                 alert(`✅ Approved ${data.approved} applications! Emails sent to clients.`);
                 setSelected([]);
                 fetchData();
             } else {
-                alert('Something went wrong. Please try again.');
+                alert(data.error || 'Something went wrong. Please try again.');
             }
         } catch (error) {
             alert('Network error. Please check your connection.');
