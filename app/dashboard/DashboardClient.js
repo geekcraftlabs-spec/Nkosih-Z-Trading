@@ -178,7 +178,6 @@ export default function DashboardClient() {
                         </h2>
                     </div>
 
-                    {/* DESKTOP TABLE */}
                     <div className="hidden sm:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-900/50">
@@ -238,7 +237,6 @@ export default function DashboardClient() {
                         </table>
                     </div>
 
-                    {/* MOBILE CARDS */}
                     <div className="sm:hidden p-4 space-y-4">
                         {filteredPending.length === 0 ? (
                             <p className="text-center text-gray-500 py-8">No pending applications</p>
@@ -292,7 +290,6 @@ export default function DashboardClient() {
                         </h2>
                     </div>
 
-                    {/* Active Filter Buttons */}
                     <div className="px-4 sm:px-6 py-3 border-b border-gray-700 flex flex-wrap gap-2">
                         <button
                             onClick={() => setActiveFilter('all')}
@@ -326,7 +323,6 @@ export default function DashboardClient() {
                         </button>
                     </div>
 
-                    {/* DESKTOP TABLE */}
                     <div className="hidden sm:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-gray-900/50">
@@ -401,7 +397,6 @@ export default function DashboardClient() {
                         </table>
                     </div>
 
-                    {/* MOBILE CARDS */}
                     <div className="sm:hidden p-4 space-y-4">
                         {filteredActive.length === 0 ? (
                             <p className="text-center text-gray-500 py-8">No active subscriptions</p>
